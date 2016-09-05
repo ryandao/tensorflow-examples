@@ -11,6 +11,9 @@ class MNISTNetwork:
         self.weights = [tf.Variable(tf.random_normal([x, y])) for (x, y) in zip(sizes[:-1], sizes[1:])]
         self.biases = [tf.Variable(tf.random_normal([x])) for x in sizes[1:]]
 
+    def feedforward(self, session, inputs):
+        return session.run(tf.argmax(tf.nn.softmax(self.logit(inputs)), 1))
+
     def logit(self, inputs):
         last_weight = self.weights[-1]
         last_bias = self.biases[-1]
@@ -47,5 +50,10 @@ class MNISTNetwork:
             save_path = saver.save(session, "model.ckpt")
             print("Model saved to %s" % save_path)
 
-network = MNISTNetwork([784, 30, 10])
-network.train()
+    def load(self, session, path):
+        saver = tf.train.Saver()
+        saver.restore(session, path)
+
+if __name__ == '__main__':
+    network = MNISTNetwork([784, 30, 10])
+    network.train()
