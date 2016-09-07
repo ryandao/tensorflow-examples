@@ -8,8 +8,8 @@ from tensorflow.examples.tutorials.mnist import input_data
 class MNISTNetwork:
     def __init__(self, sizes):
         self.sizes = sizes
-        self.weights = [tf.Variable(tf.random_normal([x, y])) for (x, y) in zip(sizes[:-1], sizes[1:])]
-        self.biases = [tf.Variable(tf.random_normal([x])) for x in sizes[1:]]
+        self.weights = [tf.Variable(tf.random_normal([x, y]), name='weights') for (x, y) in zip(sizes[:-1], sizes[1:])]
+        self.biases = [tf.Variable(tf.random_normal([x]), name='biases') for x in sizes[1:]]
 
     def feedforward(self, session, inputs):
         return session.run(tf.argmax(tf.nn.softmax(self.logit(inputs)), 1))
@@ -25,17 +25,19 @@ class MNISTNetwork:
         return tf.matmul(logit, last_weight) + last_bias
 
     def train(self):
-        inputs = tf.placeholder(tf.float32, [None, 784])
-        labels = tf.placeholder(tf.float32, [None, 10])
+        mnist = input_data.read_data_sets('data', one_hot=True)
+        inputs = tf.placeholder(tf.float32, [None, 784], name='inputs')
+        labels = tf.placeholder(tf.float32, [None, 10], name='labels')
         logit = self.logit(inputs)
         cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logit, labels))
         train_step = tf.train.GradientDescentOptimizer(3.0).minimize(cost)
-        mnist = input_data.read_data_sets('data', one_hot=True)
-        saver = tf.train.Saver()
 
         with tf.Session() as session:
+            saver = tf.train.Saver() # For saving the result graph
+            summary_writer = tf.train.SummaryWriter('.', session.graph) # For graph visualization
             session.run(tf.initialize_all_variables())
-            for i in range(10):
+
+            for i in range(30):
                 while not mnist.train.epochs_completed:
                     batch_xs, batch_ys = mnist.train.next_batch(10)
                     session.run(train_step, {inputs: batch_xs, labels: batch_ys})
@@ -49,6 +51,7 @@ class MNISTNetwork:
 
             save_path = saver.save(session, "model.ckpt")
             print("Model saved to %s" % save_path)
+            summary_writer.close()
 
     def load(self, session, path):
         saver = tf.train.Saver()
