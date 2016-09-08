@@ -13,4 +13,4 @@ data = [x[1] / 255 for x in img.getdata()]
 with tf.Session() as session:
     network = MNISTNetwork([784, 30, 10])
     network.load(session, 'model.ckpt')
-    print("Network prediction: %s" % network.feedforward(session, [data])[0])
+    print("Network prediction: %s" % network.predict(session, [data])[0])

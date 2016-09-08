@@ -11,25 +11,25 @@ class MNISTNetwork:
         self.weights = [tf.Variable(tf.random_normal([x, y]), name='weights') for (x, y) in zip(sizes[:-1], sizes[1:])]
         self.biases = [tf.Variable(tf.random_normal([x]), name='biases') for x in sizes[1:]]
 
-    def feedforward(self, session, inputs):
-        return session.run(tf.argmax(tf.nn.softmax(self.logit(inputs)), 1))
+    def predict(self, session, inputs):
+        return session.run(tf.argmax(tf.nn.softmax(self.logits(inputs)), 1))
 
-    def logit(self, inputs):
+    def logits(self, inputs):
         last_weight = self.weights[-1]
         last_bias = self.biases[-1]
-        logit = inputs
+        logits = inputs
 
         for weight, bias in zip(self.weights[:-1], self.biases[:-1]):
-            logit = tf.sigmoid(tf.matmul(logit, weight) + bias)
+            logits = tf.sigmoid(tf.matmul(logits, weight) + bias)
 
-        return tf.matmul(logit, last_weight) + last_bias
+        return tf.matmul(logits, last_weight) + last_bias
 
     def train(self):
         mnist = input_data.read_data_sets('data', one_hot=True)
         inputs = tf.placeholder(tf.float32, [None, 784], name='inputs')
         labels = tf.placeholder(tf.float32, [None, 10], name='labels')
-        logit = self.logit(inputs)
-        cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logit, labels))
+        logits = self.logits(inputs)
+        cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits, labels))
         train_step = tf.train.GradientDescentOptimizer(3.0).minimize(cost)
 
         with tf.Session() as session:
@@ -45,7 +45,7 @@ class MNISTNetwork:
                 mnist.train._index_in_epoch = 0
 
                 # Test trained model
-                correct_prediction = tf.equal(tf.argmax(logit, 1), tf.argmax(labels, 1))
+                correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(labels, 1))
                 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
                 print("Epoch %s:" % i, accuracy.eval({inputs: mnist.test.images, labels: mnist.test.labels}))
 
